@@ -125,7 +125,13 @@ namespace GameCapturePlayer
             if (!_init) return;
             if (cmbVideo.SelectedItem is DeviceItem v)
             {
-                _main.SelectDevicesByPath(v.Device.DevicePath, null);
+                var changed = _main.SelectDevicesByPath(v.Device.DevicePath, null);
+                if (changed)
+                {
+                    // Refresh formats list for the newly selected video device
+                    PopulateFormats();
+                    _main.RestartPreviewIfRunning();
+                }
             }
         }
 
@@ -134,7 +140,11 @@ namespace GameCapturePlayer
             if (!_init) return;
             if (cmbAudio.SelectedItem is DeviceItem a)
             {
-                _main.SelectDevicesByPath(null, a.Device.DevicePath);
+                var changed = _main.SelectDevicesByPath(null, a.Device.DevicePath);
+                if (changed)
+                {
+                    _main.RestartPreviewIfRunning();
+                }
             }
         }
 
