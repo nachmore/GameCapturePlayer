@@ -725,7 +725,7 @@ namespace GameCapturePlayer
         {
             var dlg = new SettingsWindow(this);
             dlg.Owner = this;
-            dlg.Show();
+            dlg.ShowDialog();
         }
 
         // Public API used by Advanced window
