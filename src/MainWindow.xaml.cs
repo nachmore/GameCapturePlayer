@@ -124,6 +124,7 @@ namespace GameCapturePlayer
         // Fullscreen state
         private bool _isFullscreen = false;
         private readonly DispatcherTimer _fullscreenHintTimer = new DispatcherTimer();
+        private Window? _fullscreenHintWindow;
 
         // Preferences persistence
         private class PersistedPrefs
@@ -147,7 +148,7 @@ namespace GameCapturePlayer
 
             _statsTimer.Interval = TimeSpan.FromMilliseconds(500);
             _fullscreenHintTimer.Interval = TimeSpan.FromSeconds(2.5);
-            _fullscreenHintTimer.Tick += (s, e) => { try { fullscreenHint.Visibility = Visibility.Collapsed; } catch { } _fullscreenHintTimer.Stop(); };
+            _fullscreenHintTimer.Tick += (s, e) => { try { HideFullscreenHintOverlay(); } catch { } _fullscreenHintTimer.Stop(); };
             _statsTimer.Tick += StatsTimer_Tick;
         }
 
@@ -322,9 +323,9 @@ namespace GameCapturePlayer
                     this.WindowState = System.Windows.WindowState.Maximized;
                     this.Topmost = true;
                     try { topBar.Visibility = Visibility.Collapsed; } catch { }
-                    try { fullscreenHint.Visibility = Visibility.Visible; _fullscreenHintTimer.Start(); } catch { }
+                    try { ShowFullscreenHintOverlay(); _fullscreenHintTimer.Start(); } catch { }
                     try { if (_vmr9Windowless != null) { _vmr9Windowless.SetAspectRatioMode(VMR9AspectRatioMode.LetterBox); UpdateVideoPosition(); } } catch { }
-                    btnFullscreen.Content = "Exit Fullscreen";
+                    try { if (btnFullscreen != null) btnFullscreen.ToolTip = "Exit fullscreen"; } catch { }
                 }
                 else
                 {
@@ -333,9 +334,9 @@ namespace GameCapturePlayer
                     this.WindowStyle = System.Windows.WindowStyle.SingleBorderWindow;
                     this.WindowState = System.Windows.WindowState.Normal;
                     try { topBar.Visibility = Visibility.Visible; } catch { }
-                    try { fullscreenHint.Visibility = Visibility.Collapsed; } catch { }
+                    try { HideFullscreenHintOverlay(); } catch { }
                     try { if (_vmr9Windowless != null) { _vmr9Windowless.SetAspectRatioMode(VMR9AspectRatioMode.LetterBox); UpdateVideoPosition(); } } catch { }
-                    btnFullscreen.Content = "Fullscreen";
+                    try { if (btnFullscreen != null) btnFullscreen.ToolTip = "Enter fullscreen"; } catch { }
                 }
             }
             catch { }
@@ -347,6 +348,13 @@ namespace GameCapturePlayer
             {
                 btnFullscreen_Click(this, new RoutedEventArgs());
                 e.Handled = true;
+                return;
+            }
+            if (e.Key == System.Windows.Input.Key.F11)
+            {
+                btnFullscreen_Click(this, new RoutedEventArgs());
+                e.Handled = true;
+                return;
             }
         }
 
@@ -385,6 +393,7 @@ namespace GameCapturePlayer
             {
                 _panel = panel;
                 _panel.Resize += Panel_Resize;
+                _panel.DoubleClick += Panel_DoubleClick;
                 hr = _vmr9Windowless.SetVideoClippingWindow(panel.Handle);
                 DsError.ThrowExceptionForHR(hr);
                 // Ensure letterboxing uses pure black borders
@@ -434,6 +443,7 @@ namespace GameCapturePlayer
         {
             try { UpdateVideoPosition(); } catch { }
             try { RepositionOverlayLabel(); } catch { }
+            try { RepositionFullscreenHintOverlay(); } catch { }
         }
 
         private void UpdateVideoPosition()
@@ -482,9 +492,11 @@ namespace GameCapturePlayer
             if (_panel != null)
             {
                 try { _panel.Resize -= Panel_Resize; } catch { }
+                try { _panel.DoubleClick -= Panel_DoubleClick; } catch { }
                 _panel = null;
             }
 
+            HideFullscreenHintOverlay();
             ReleaseCom(ref _vmr9Windowless);
             ReleaseCom(ref _vmr9);
             ReleaseCom(ref _videoSource);
@@ -627,6 +639,81 @@ namespace GameCapturePlayer
             try { cmbAudio.IsEnabled = !isRunning; } catch { }
             try { if (playIcon != null) playIcon.Visibility = isRunning ? Visibility.Collapsed : Visibility.Visible; } catch { }
             try { if (stopIcon != null) stopIcon.Visibility = isRunning ? Visibility.Visible : Visibility.Collapsed; } catch { }
+            try { if (btnStartStop != null) btnStartStop.ToolTip = isRunning ? "Stop" : "Start"; } catch { }
+        }
+
+        private void Panel_DoubleClick(object? sender, EventArgs e)
+        {
+            try { btnFullscreen_Click(this, new RoutedEventArgs()); } catch { }
+        }
+
+        private void ShowFullscreenHintOverlay()
+        {
+            try
+            {
+                HideFullscreenHintOverlay();
+                var border = new System.Windows.Controls.Border
+                {
+                    Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromArgb(170, 128, 128, 128)),
+                    CornerRadius = new System.Windows.CornerRadius(6),
+                    Padding = new Thickness(12),
+                    Child = new System.Windows.Controls.TextBlock
+                    {
+                        Text = "Press ESC to exit fullscreen mode",
+                        Foreground = System.Windows.Media.Brushes.White,
+                        FontSize = 16
+                    },
+                    IsHitTestVisible = false
+                };
+
+                _fullscreenHintWindow = new Window
+                {
+                    WindowStyle = System.Windows.WindowStyle.None,
+                    AllowsTransparency = true,
+                    Background = System.Windows.Media.Brushes.Transparent,
+                    ShowInTaskbar = false,
+                    Topmost = true,
+                    SizeToContent = SizeToContent.WidthAndHeight,
+                    Owner = this,
+                    ShowActivated = false,
+                    Content = border
+                };
+
+                _fullscreenHintWindow.Loaded += (s, e) => CenterFullscreenHintWindow();
+                _fullscreenHintWindow.Show();
+            }
+            catch { }
+        }
+
+        private void HideFullscreenHintOverlay()
+        {
+            if (_fullscreenHintWindow != null)
+            {
+                try { _fullscreenHintWindow.Close(); } catch { }
+                _fullscreenHintWindow = null;
+            }
+        }
+
+        private void RepositionFullscreenHintOverlay()
+        {
+            CenterFullscreenHintWindow();
+        }
+
+        private void CenterFullscreenHintWindow()
+        {
+            if (_fullscreenHintWindow == null) return;
+            try
+            {
+                var w = _fullscreenHintWindow;
+                // Ensure layout is measured
+                w.UpdateLayout();
+                // Center within this window
+                var left = this.Left + (this.ActualWidth - w.ActualWidth) / 2.0;
+                var top = this.Top + (this.ActualHeight - w.ActualHeight) / 2.0;
+                w.Left = Math.Max(0, left);
+                w.Top = Math.Max(0, top);
+            }
+            catch { }
         }
 
         private void ShowStatus(string text)

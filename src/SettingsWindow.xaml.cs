@@ -24,6 +24,7 @@ namespace GameCapturePlayer
             InitializeComponent();
             _main = main;
             Loaded += SettingsWindow_Loaded;
+            this.Closing += SettingsWindow_Closing;
         }
 
         private void SettingsWindow_Loaded(object sender, RoutedEventArgs e)
@@ -200,14 +201,15 @@ namespace GameCapturePlayer
             }
         }
 
-        private void BtnSave_Click(object sender, RoutedEventArgs e)
+        private void BtnClose_Click(object sender, RoutedEventArgs e)
         {
-            try
-            {
-                _main.SaveCurrentDevicePreferences();
-            }
-            catch { }
-            this.Close();
+            try { _main.SaveCurrentDevicePreferences(); } catch { }
+            try { this.Close(); } catch { }
+        }
+
+        private void SettingsWindow_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
+        {
+            try { _main.SaveCurrentDevicePreferences(); } catch { }
         }
 
         private void Header_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -220,6 +222,16 @@ namespace GameCapturePlayer
                 }
             }
             catch { }
+        }
+
+        private void Window_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == Key.Escape)
+            {
+                try { _main.SaveCurrentDevicePreferences(); } catch { }
+                try { this.Close(); } catch { }
+                e.Handled = true;
+            }
         }
     }
 }

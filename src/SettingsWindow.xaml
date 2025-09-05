@@ -3,17 +3,27 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Settings" Height="520" Width="640"
         WindowStartupLocation="CenterOwner"
-        WindowStyle="None" ResizeMode="NoResize" ShowInTaskbar="False" Background="#1e1e1e">
+        WindowStyle="None" ResizeMode="NoResize" ShowInTaskbar="False" Background="#1e1e1e"
+        KeyDown="Window_KeyDown">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
+            <!-- footer removed -->
         </Grid.RowDefinitions>
 
-        <!-- Header -->
+        <!-- Header with title and close button -->
         <Border Grid.Row="0" Background="#2a2a2a" Padding="12,8" MouseLeftButtonDown="Header_MouseLeftButtonDown">
-            <TextBlock Text="Settings" Foreground="White" FontWeight="Bold" FontSize="16"/>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Settings" Foreground="White" FontWeight="Bold" FontSize="16" VerticalAlignment="Center"/>
+                <Button Grid.Column="1" x:Name="btnClose" Width="28" Height="24" Background="Transparent" BorderThickness="0" Click="BtnClose_Click" ToolTip="Close">
+                    <TextBlock Text="✕" FontSize="14" Foreground="White" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                </Button>
+            </Grid>
         </Border>
 
         <!-- Content -->
@@ -84,9 +94,6 @@
             </TabItem>
         </TabControl>
 
-        <!-- Footer -->
-        <DockPanel Grid.Row="2" LastChildFill="False" Background="#2a2a2a">
-            <Button x:Name="btnSave" Content="Save" Width="100" Margin="12,8" DockPanel.Dock="Right" Click="BtnSave_Click"/>
-        </DockPanel>
+        <!-- Footer removed: saving happens automatically on close -->
     </Grid>
 </Window>

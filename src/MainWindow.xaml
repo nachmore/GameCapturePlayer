@@ -19,15 +19,24 @@
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <StackPanel Orientation="Horizontal" Grid.Column="0" Margin="8,4,8,4">
-                <Button x:Name="btnStartStop" Width="40" Height="36" Margin="0,0,8,0" Click="btnStartStop_Click" Background="Transparent" BorderThickness="0">
+            <StackPanel Orientation="Horizontal" Grid.Column="0" Margin="6,2,6,2">
+                <!-- Start/Stop icon button -->
+                <Button x:Name="btnStartStop" Width="28" Height="24" Padding="0" Margin="0,0,6,0" Click="btnStartStop_Click" Background="Transparent" BorderThickness="0" ToolTip="Start">
                     <Grid>
-                        <Path x:Name="playIcon" Data="M 0 0 L 0 20 L 17 10 Z" Fill="Lime" Stretch="Uniform" Width="20" Height="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        <Path x:Name="stopIcon" Data="M 0 0 H 20 V 20 H 0 Z" Fill="Red" Stretch="Uniform" Width="20" Height="20" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
+                        <TextBlock x:Name="playIcon" Text="&#xf5b0;" FontFamily="Segoe Fluent Icons" FontSize="14" Foreground="Green" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Ellipse x:Name="stopIcon" Width="14" Height="14" Fill="Red" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
                     </Grid>
                 </Button>
-                <Button x:Name="btnSettings" Content="Settings" Height="36" MinWidth="96" Margin="0,0,8,0" Click="btnSettings_Click"/>
-                <Button x:Name="btnFullscreen" Content="Fullscreen" Height="36" MinWidth="96" Margin="0,0,8,0" Click="btnFullscreen_Click"/>
+
+                <!-- Settings icon (sliders) -->
+                <Button x:Name="btnSettings" Width="28" Height="24" Padding="0" Margin="0,0,6,0" Click="btnSettings_Click" Background="Transparent" BorderThickness="0" ToolTip="Settings">
+                    <TextBlock Text="&#xE713;" FontFamily="Segoe Fluent Icons" FontSize="14" Foreground="Black" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Button>
+
+                <!-- Fullscreen icon (corner brackets) -->
+                <Button x:Name="btnFullscreen" Width="28" Height="24" Padding="0" Margin="0,0,6,0" Click="btnFullscreen_Click" Background="Transparent" BorderThickness="0" ToolTip="Enter fullscreen">
+                    <TextBlock Text="&#xE740;" FontFamily="Segoe Fluent Icons" FontSize="14" Foreground="Black" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Button>
             </StackPanel>
         </Grid>
 
@@ -37,8 +46,9 @@
                     <wf:Panel x:Name="videoPanel" BackColor="Black"/>
                 </wfi:WindowsFormsHost>
             </Border>
-            <Border HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,12,0,0" Background="#80000000" CornerRadius="4" Padding="8" Visibility="Collapsed" x:Name="fullscreenHint">
-                <TextBlock Text="Press ESC to exit fullscreen" Foreground="White"/>
+            <!-- Centered fullscreen hint overlay -->
+            <Border x:Name="fullscreenHint" HorizontalAlignment="Center" VerticalAlignment="Center" Background="#AA808080" CornerRadius="6" Padding="12" Visibility="Collapsed">
+                <TextBlock Text="Press ESC to exit fullscreen mode" Foreground="White" FontSize="16"/>
             </Border>
         </Grid>
 
