@@ -13,24 +13,39 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <StackPanel Orientation="Horizontal" Margin="8" Grid.Row="0">
-            <StackPanel>
-                <TextBlock Text="Video Device"/>
-                <ComboBox x:Name="cmbVideo" Width="320" DisplayMemberPath="Name"/>
+        <Grid Grid.Row="0" x:Name="topBar" Margin="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Orientation="Horizontal" Grid.Column="0" Margin="8,4,8,4">
+                <Button x:Name="btnStartStop" Width="40" Height="36" Margin="0,0,8,0" Click="btnStartStop_Click" Background="Transparent" BorderThickness="0">
+                    <Grid>
+                        <Path x:Name="playIcon" Data="M 0 0 L 0 20 L 17 10 Z" Fill="Lime" Stretch="Uniform" Width="20" Height="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Path x:Name="stopIcon" Data="M 0 0 H 20 V 20 H 0 Z" Fill="Red" Stretch="Uniform" Width="20" Height="20" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
+                    </Grid>
+                </Button>
+                <Button x:Name="btnSettings" Content="Settings" Height="36" MinWidth="96" Margin="0,0,8,0" Click="btnSettings_Click"/>
+                <Button x:Name="btnFullscreen" Content="Fullscreen" Height="36" MinWidth="96" Margin="0,0,8,0" Click="btnFullscreen_Click"/>
             </StackPanel>
-            <StackPanel Margin="16,0,0,0">
-                <TextBlock Text="Audio Device"/>
-                <ComboBox x:Name="cmbAudio" Width="320" DisplayMemberPath="Name"/>
-            </StackPanel>
-            <Button x:Name="btnStart" Content="Start" Width="100" Height="32" Margin="16,0,0,0" Click="btnStart_Click"/>
-            <Button x:Name="btnStop" Content="Stop" Width="100" Height="32" Margin="8,0,0,0" Click="btnStop_Click"/>
-            <TextBlock x:Name="txtStatus" Margin="16,0,0,0" VerticalAlignment="Center"/>
-        </StackPanel>
+        </Grid>
 
-        <Border Grid.Row="1" Margin="8" Background="#111">
-            <wfi:WindowsFormsHost x:Name="wfHost">
-                <wf:Panel x:Name="videoPanel" BackColor="Black"/>
-            </wfi:WindowsFormsHost>
-        </Border>
+        <Grid Grid.Row="1" Margin="0">
+            <Border Background="#111">
+                <wfi:WindowsFormsHost x:Name="wfHost">
+                    <wf:Panel x:Name="videoPanel" BackColor="Black"/>
+                </wfi:WindowsFormsHost>
+            </Border>
+            <Border HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,12,0,0" Background="#80000000" CornerRadius="4" Padding="8" Visibility="Collapsed" x:Name="fullscreenHint">
+                <TextBlock Text="Press ESC to exit fullscreen" Foreground="White"/>
+            </Border>
+        </Grid>
+
+        <!-- Hidden selectors preserved for code-behind compatibility; real UI moved to Settings -->
+        <Grid Visibility="Collapsed">
+            <ComboBox x:Name="cmbVideo"/>
+            <ComboBox x:Name="cmbAudio"/>
+        </Grid>
     </Grid>
 </Window>

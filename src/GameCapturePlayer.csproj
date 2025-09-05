@@ -11,4 +11,10 @@
   <ItemGroup>
     <PackageReference Include="DirectShowLib.Standard" Version="2.1.0" />
   </ItemGroup>
+  <!-- Exclude deprecated AdvancedWindow from build -->
+  <ItemGroup>
+    <Compile Remove="AdvancedWindow.xaml.cs" />
+    <Page Remove="AdvancedWindow.xaml" />
+    <None Remove="AdvancedWindow.xaml" />
+  </ItemGroup>
 </Project>
