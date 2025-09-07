@@ -11,4 +11,7 @@
   <ItemGroup>
     <PackageReference Include="DirectShowLib.Standard" Version="2.1.0" />
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="img\loading.png" />
+  </ItemGroup>
 </Project>

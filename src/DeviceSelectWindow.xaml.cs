@@ -3,6 +3,7 @@ using System.Linq;
 using System.Windows;
 using DirectShowLib;
 using System.Collections.Generic;
+using System.Windows.Input;
 
 namespace GameCapturePlayer
 {
@@ -75,6 +76,34 @@ namespace GameCapturePlayer
         private void Cancel_Click(object sender, RoutedEventArgs e)
         {
             DialogResult = false;
+        }
+
+        private void BtnClose_Click(object sender, RoutedEventArgs e)
+        {
+            try { DialogResult = false; } catch { }
+            try { this.Close(); } catch { }
+        }
+
+        private void Header_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            try
+            {
+                if (e.ButtonState == MouseButtonState.Pressed)
+                {
+                    DragMove();
+                }
+            }
+            catch { }
+        }
+
+        private void Window_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == Key.Escape)
+            {
+                try { DialogResult = false; } catch { }
+                try { this.Close(); } catch { }
+                e.Handled = true;
+            }
         }
     }
 }

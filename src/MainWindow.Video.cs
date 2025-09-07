@@ -87,6 +87,18 @@ namespace GameCapturePlayer
             _videoMediaControl = (IMediaControl)_videoGraph;
             hr = _videoMediaControl.Run();
             DsError.ThrowExceptionForHR(hr);
+            // Clear the temporary startup background image/colors once video is running
+            try
+            {
+                if (_panel != null)
+                {
+                    try { _panel.BackgroundImage?.Dispose(); } catch { }
+                    _panel.BackgroundImage = null;
+                    _panel.BackgroundImageLayout = ImageLayout.None;
+                    _panel.BackColor = System.Drawing.Color.Black;
+                }
+            }
+            catch { }
         }
 
         private void Panel_Resize(object? sender, EventArgs e)
@@ -94,6 +106,7 @@ namespace GameCapturePlayer
             try { UpdateVideoPosition(); } catch { }
             try { RepositionOverlayLabel(); } catch { }
             try { RepositionFullscreenHintOverlay(); } catch { }
+            try { RepositionIntroOverlayWindow(); } catch { }
         }
 
         private void UpdateVideoPosition()

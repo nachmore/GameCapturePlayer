@@ -3,12 +3,16 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
+using System.Threading.Tasks;
+using System.Windows.Media.Animation;
 
 namespace GameCapturePlayer
 {
     public partial class MainWindow : Window
     {
         private bool IsRunning => _videoMediaControl != null;
+        private Window? _introWindow;
+        private IntroOverlay? _introControl;
 
         private void btnStartStop_Click(object sender, RoutedEventArgs e)
         {
@@ -22,10 +26,12 @@ namespace GameCapturePlayer
             }
         }
 
-        private void btnStart_Click(object sender, RoutedEventArgs e)
+        private async void btnStart_Click(object sender, RoutedEventArgs e)
         {
             try
             {
+                // Show intro overlay while we initialize the preview/monitor graphs
+                try { ShowIntroOverlay(); } catch { }
                 if (_settings.OneMsTimer) ApplyTimerResolution();
                 if (_settings.HighPriority) ApplyHighPriority();
                 if (_settings.LowLatencyGC) ApplyLowLatencyGC();
@@ -34,11 +40,15 @@ namespace GameCapturePlayer
                 UpdateUiState(isRunning: true);
                 ShowStatus("Running");
                 if (_settings.StatsOverlay) ShowStatsOverlay(true);
+
+                // Keep overlay for a brief minimum to avoid flash, then fade it out
+                try { await Task.Delay(600); await FadeOutAndHideIntroOverlayAsync(); } catch { }
             }
             catch (Exception ex)
             {
                 ShowStatus($"Start error: {ex.Message}");
                 StopAll();
+                try { HideIntroOverlayImmediate(); } catch { }
             }
         }
 
@@ -47,6 +57,7 @@ namespace GameCapturePlayer
             StopAll();
             UpdateUiState(isRunning: false);
             ShowStatus("Stopped");
+            try { HideIntroOverlayImmediate(); } catch { }
         }
 
         private void btnFullscreen_Click(object sender, RoutedEventArgs e)
@@ -181,6 +192,86 @@ namespace GameCapturePlayer
             try { this.Title = $"Game Capture Player — {text}"; } catch { }
         }
 
+        // Intro overlay helpers (airspace-safe via top-level window)
+        private void ShowIntroOverlay()
+        {
+            try
+            {
+                HideIntroOverlayImmediate();
+                _introControl = new IntroOverlay();
+                _introWindow = new Window
+                {
+                    WindowStyle = WindowStyle.None,
+                    AllowsTransparency = true,
+                    Background = System.Windows.Media.Brushes.Transparent,
+                    ShowInTaskbar = false,
+                    Topmost = false,
+                    WindowStartupLocation = WindowStartupLocation.Manual,
+                    Owner = this,
+                    ShowActivated = false,
+                    Content = _introControl
+                };
+                _introWindow.Loaded += (s, e) => PositionIntroWindowOverVideoArea();
+                _introWindow.Show();
+                PositionIntroWindowOverVideoArea();
+            }
+            catch { }
+        }
+
+        private async Task FadeOutAndHideIntroOverlayAsync()
+        {
+            if (_introWindow == null || _introControl == null) return;
+            try { await _introControl.FadeOutAsync(); } catch { }
+            try { _introWindow.Close(); } catch { }
+            _introWindow = null;
+            _introControl = null;
+        }
+
+        private void HideIntroOverlayImmediate()
+        {
+            if (_introWindow == null) return;
+            try { _introWindow.Close(); } catch { }
+            _introWindow = null;
+            _introControl = null;
+        }
+
+        private void StartIntroStoryboards()
+        {
+            try { _introControl?.StartAnimations(); } catch { }
+        }
+
+        private void RepositionIntroOverlayWindow()
+        {
+            PositionIntroWindowOverVideoArea();
+        }
+
+        private void PositionIntroWindowOverVideoArea()
+        {
+            if (_introWindow == null) return;
+            try
+            {
+                // Position and size to cover the video area under the toolbar (wfHost)
+                if (wfHost == null) return;
+                wfHost.UpdateLayout();
+                // Screen pixels -> WPF DIPs (handle DPI scaling)
+                var topLeftPx = wfHost.PointToScreen(new System.Windows.Point(0, 0));
+                var bottomRightPx = wfHost.PointToScreen(new System.Windows.Point(wfHost.ActualWidth, wfHost.ActualHeight));
+
+                var source = System.Windows.PresentationSource.FromVisual(this);
+                var m = source?.CompositionTarget?.TransformFromDevice ?? new System.Windows.Media.Matrix(1, 0, 0, 1, 0, 0);
+                var topLeft = m.Transform(topLeftPx);
+                var bottomRight = m.Transform(bottomRightPx);
+                double width = Math.Max(0, bottomRight.X - topLeft.X);
+                double height = Math.Max(0, bottomRight.Y - topLeft.Y);
+
+                _introWindow.Left = topLeft.X;
+                _introWindow.Top = topLeft.Y;
+                _introWindow.Width = width;
+                _introWindow.Height = height;
+            }
+            catch { }
+        }
+        
         private void btnSettings_Click(object sender, RoutedEventArgs e)
         {
             var dlg = new SettingsWindow(this);

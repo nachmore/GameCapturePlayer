@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Windows;
@@ -63,38 +64,50 @@ namespace GameCapturePlayer
 
         private void ShowDevicePickerAndMaybeStart()
         {
+      Debug.WriteLine("ShowDevicePickerAndMaybeStart");
+
             try
             {
-                var dlg = new DeviceSelectWindow();
-                dlg.Owner = this;
-                if (dlg.ShowDialog() == true)
+                bool prevEnabled = this.IsEnabled;
+                this.IsEnabled = false; // ensure main window cannot be interacted with
+                try
                 {
-                    if (!string.IsNullOrEmpty(dlg.SelectedVideoPath))
+                    var dlg = new DeviceSelectWindow();
+                    dlg.Owner = this;
+                    if (dlg.ShowDialog() == true)
                     {
-                        var vid = TryFindDeviceByPath(FilterCategory.VideoInputDevice, dlg.SelectedVideoPath);
-                        if (vid != null) cmbVideo.SelectedItem = vid;
-                    }
-                    if (!string.IsNullOrEmpty(dlg.SelectedAudioPath))
-                    {
-                        var aud = TryFindDeviceByPath(FilterCategory.AudioInputDevice, dlg.SelectedAudioPath);
-                        if (aud != null) cmbAudio.SelectedItem = aud;
-                    }
+                        if (!string.IsNullOrEmpty(dlg.SelectedVideoPath))
+                        {
+                            var vid = TryFindDeviceByPath(FilterCategory.VideoInputDevice, dlg.SelectedVideoPath);
+                            if (vid != null) cmbVideo.SelectedItem = vid;
+                        }
+                        if (!string.IsNullOrEmpty(dlg.SelectedAudioPath))
+                        {
+                            var aud = TryFindDeviceByPath(FilterCategory.AudioInputDevice, dlg.SelectedAudioPath);
+                            if (aud != null) cmbAudio.SelectedItem = aud;
+                        }
 
-                    if (dlg.RememberForNextTime)
-                    {
-                        _prefs.RememberDevices = true;
-                        _prefs.VideoDevicePath = (cmbVideo.SelectedItem as DeviceItem)?.Device.DevicePath;
-                        _prefs.AudioDevicePath = (cmbAudio.SelectedItem as DeviceItem)?.Device.DevicePath;
-                        SavePrefs();
-                    }
-                    else
-                    {
-                        _prefs.RememberDevices = false;
-                        _prefs.VideoDevicePath = _prefs.AudioDevicePath = null;
-                        SavePrefs();
-                    }
+                        if (dlg.RememberForNextTime)
+                        {
+                            _prefs.RememberDevices = true;
+                            _prefs.VideoDevicePath = (cmbVideo.SelectedItem as DeviceItem)?.Device.DevicePath;
+                            _prefs.AudioDevicePath = (cmbAudio.SelectedItem as DeviceItem)?.Device.DevicePath;
+                            SavePrefs();
+                        }
+                        else
+                        {
+                            _prefs.RememberDevices = false;
+                            _prefs.VideoDevicePath = _prefs.AudioDevicePath = null;
+                            SavePrefs();
+                        }
 
-                    btnStart_Click(this, new RoutedEventArgs());
+                        btnStart_Click(this, new RoutedEventArgs());
+                    }
+                }
+                finally
+                {
+                    this.IsEnabled = prevEnabled;
+                    try { this.Activate(); } catch { }
                 }
             }
             catch { }

@@ -135,6 +135,7 @@ namespace GameCapturePlayer
             }
 
             HideFullscreenHintOverlay();
+            try { HideIntroOverlayImmediate(); } catch { }
             ReleaseCom(ref _vmr9Windowless);
             ReleaseCom(ref _vmr9);
             ReleaseCom(ref _videoSource);

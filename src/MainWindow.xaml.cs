@@ -97,6 +97,8 @@ namespace GameCapturePlayer
             Loaded += MainWindow_Loaded;
             Closed += MainWindow_Closed;
             PreviewKeyDown += MainWindow_PreviewKeyDown;
+            LocationChanged += MainWindow_LocationOrSizeChanged;
+            SizeChanged += MainWindow_LocationOrSizeChanged;
             // Capture original priority to restore later
             try { _originalPriorityClass = Process.GetCurrentProcess().PriorityClass; } catch { }
             try { _originalGcLatency = GCSettings.LatencyMode; } catch { }
@@ -107,10 +109,20 @@ namespace GameCapturePlayer
             _statsTimer.Tick += StatsTimer_Tick;
         }
 
+        private void MainWindow_LocationOrSizeChanged(object? sender, EventArgs e)
+        {
+            try { CenterFullscreenHintWindow(); } catch { }
+            try { PositionIntroWindowOverVideoArea(); } catch { }
+        }
+
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
             try
             {
+                // Show background intro overlay behind dialogs on startup
+                try { ShowIntroOverlay(); PositionIntroWindowOverVideoArea(); } catch { }
+                // Also paint the WinForms video panel with the purple background and loading image
+                try { ApplyStartupBackgroundToPanel(); } catch { }
                 LoadDevices();
                 LoadPrefs();
                 // Choose devices and auto-start according to prefs or prompt
@@ -142,27 +154,36 @@ namespace GameCapturePlayer
             }
         }
 
+        private void ApplyStartupBackgroundToPanel()
+        {
+            try
+            {
+                // Set purple background
+                try { videoPanel.BackColor = System.Drawing.ColorTranslator.FromHtml("#7030a0"); } catch { }
+
+                // Load the embedded WPF resource as a System.Drawing.Image
+                var uri = new Uri("pack://application:,,,/img/loading.png", UriKind.Absolute);
+                var sri = System.Windows.Application.GetResourceStream(uri);
+                if (sri != null)
+                {
+                    using var s = sri.Stream;
+                    using var ms = new System.IO.MemoryStream();
+                    s.CopyTo(ms);
+                    ms.Position = 0;
+                    using var img = System.Drawing.Image.FromStream(ms);
+                    // Clone into a new Image so we can dispose the stream
+                    var bmp = new System.Drawing.Bitmap(img);
+                    try { videoPanel.BackgroundImage?.Dispose(); } catch { }
+                    videoPanel.BackgroundImage = bmp;
+                    videoPanel.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Center;
+                }
+            }
+            catch { }
+        }
+
         private void MainWindow_Closed(object? sender, EventArgs e)
         {
             StopAll();
         }
-
-        // Moved: LoadDevices/TryFindDeviceByPath/ShowDevicePickerAndMaybeStart/LoadPrefs/SavePrefs (see MainWindow.Preferences.cs)
-
-        
-
-        
-
-        
-
-        // Methods moved to partial files:
-        // - UI: MainWindow.UI.cs
-        // - Video: MainWindow.Video.cs
-        // - Audio: MainWindow.Audio.cs
-        // - System tuning and COM helpers: MainWindow.System.cs
-        // - Stats overlay: MainWindow.Stats.cs
-        // - Formats and preferred settings: MainWindow.Formats.cs
-        // - Preferences and device selection: MainWindow.Preferences.cs
-        // - Controller toggles/restart: MainWindow.Controller.cs
     }
 }
