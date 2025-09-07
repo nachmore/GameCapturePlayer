@@ -5,12 +5,13 @@ using System.Windows.Input;
 using System.Windows.Threading;
 using System.Threading.Tasks;
 using System.Windows.Media.Animation;
+using DirectShowLib;
 
 namespace GameCapturePlayer
 {
     public partial class MainWindow : Window
     {
-        private bool IsRunning => _videoMediaControl != null;
+        private bool IsRunning => _mediaWorker != null && _mediaWorker.IsRunning;
         private Window? _introWindow;
         private IntroOverlay? _introControl;
 
@@ -35,8 +36,45 @@ namespace GameCapturePlayer
                 if (_settings.OneMsTimer) ApplyTimerResolution();
                 if (_settings.HighPriority) ApplyHighPriority();
                 if (_settings.LowLatencyGC) ApplyLowLatencyGC();
-                StartVideoPreview();
-                StartAudioMonitor();
+
+                // Gather device paths
+                var vidPath = GetSelectedVideoDevicePath();
+                var audPath = GetSelectedAudioDevicePath();
+                if (string.IsNullOrEmpty(vidPath) || string.IsNullOrEmpty(audPath))
+                    throw new InvalidOperationException("No devices selected");
+
+                // Ensure panel handle and initial rect
+                IntPtr handle = IntPtr.Zero;
+                System.Drawing.Rectangle r = System.Drawing.Rectangle.Empty;
+                var host = wfHost as System.Windows.Forms.Integration.WindowsFormsHost;
+                if (host?.Child is System.Windows.Forms.Panel panel)
+                {
+                    _panel = panel;
+                    handle = panel.Handle;
+                    r = panel.ClientRectangle;
+                    try { _panel.Resize += Panel_Resize; } catch { }
+                    try { _panel.DoubleClick += Panel_DoubleClick; } catch { }
+                }
+                else
+                {
+                    throw new InvalidOperationException("Video panel host not ready");
+                }
+
+                var rect = new DsRect(r.Left, r.Top, r.Right, r.Bottom);
+                await _mediaWorker.StartAsync(vidPath!, audPath!, handle, rect,
+                    _settings.VmrSingleStream, _settings.MinimalBuffering, _settings.NoGraphClock);
+                // Clear the temporary startup background once video is running
+                try
+                {
+                    if (_panel != null)
+                    {
+                        try { _panel.BackgroundImage?.Dispose(); } catch { }
+                        _panel.BackgroundImage = null;
+                        _panel.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+                        _panel.BackColor = System.Drawing.Color.Black;
+                    }
+                }
+                catch { }
                 UpdateUiState(isRunning: true);
                 ShowStatus("Running");
                 if (_settings.StatsOverlay) ShowStatsOverlay(true);
@@ -201,7 +239,7 @@ namespace GameCapturePlayer
                 _introControl = new IntroOverlay();
                 _introWindow = new Window
                 {
-                    WindowStyle = WindowStyle.None,
+                    WindowStyle = System.Windows.WindowStyle.None,
                     AllowsTransparency = true,
                     Background = System.Windows.Media.Brushes.Transparent,
                     ShowInTaskbar = false,

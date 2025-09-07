@@ -109,13 +109,16 @@ namespace GameCapturePlayer
             try { RepositionIntroOverlayWindow(); } catch { }
         }
 
-        private void UpdateVideoPosition()
+        private async void UpdateVideoPosition()
         {
-            if (_vmr9Windowless == null || _panel == null) return;
-            var r = _panel.ClientRectangle;
-            var dst = new DsRect(r.Left, r.Top, r.Right, r.Bottom);
-            int hr = _vmr9Windowless.SetVideoPosition(null, dst);
-            DsError.ThrowExceptionForHR(hr);
+            if (_panel == null) return;
+            try
+            {
+                var r = _panel.ClientRectangle;
+                var dst = new DsRect(r.Left, r.Top, r.Right, r.Bottom);
+                await _mediaWorker.UpdateVideoWindowAsync(dst);
+            }
+            catch { }
         }
     }
 }

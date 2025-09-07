@@ -30,7 +30,7 @@
                 <Image Source="pack://application:,,,/img/loading.png"
                        Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"
                        Width="480" Height="Auto" />
-                <Grid HorizontalAlignment="Center" VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5">
+                <Grid HorizontalAlignment="Center" VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5" CacheMode="BitmapCache">
                     <Grid.RenderTransform>
                         <TransformGroup>
                             <RotateTransform x:Name="spinnerRotation" Angle="0" />

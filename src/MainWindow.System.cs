@@ -124,6 +124,7 @@ namespace GameCapturePlayer
         private void StopAll()
         {
             ShowStatsOverlay(false);
+            try { _mediaWorker.StopAsync().GetAwaiter().GetResult(); } catch { }
             StopGraph(ref _videoMediaControl);
             StopGraph(ref _audioMediaControl);
 

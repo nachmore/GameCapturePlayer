@@ -91,6 +91,9 @@ namespace GameCapturePlayer
         private PersistedPrefs _prefs = new PersistedPrefs();
         private static string PrefsFilePath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "GameCapturePlayer", "settings.json");
 
+        // Media graphs on a dedicated STA thread
+        private readonly MediaGraphWorker _mediaWorker = new MediaGraphWorker();
+
         public MainWindow()
         {
             InitializeComponent();
@@ -184,6 +187,7 @@ namespace GameCapturePlayer
         private void MainWindow_Closed(object? sender, EventArgs e)
         {
             StopAll();
+            try { _mediaWorker.Dispose(); } catch { }
         }
     }
 }
