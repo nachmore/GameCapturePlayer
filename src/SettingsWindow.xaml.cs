@@ -64,6 +64,7 @@ namespace GameCapturePlayer
                 chkHighPrio.IsChecked = s.HighPriority;
                 chkOneMsTimer.IsChecked = s.OneMsTimer;
                 chkLowLatencyGC.IsChecked = s.LowLatencyGC;
+                chkPreventSleep.IsChecked = s.PreventSleepWhileStreaming;
                 chkSingleStream.IsChecked = s.VmrSingleStream;
                 chkMinimalBuffering.IsChecked = s.MinimalBuffering;
                 chkNoGraphClock.IsChecked = s.NoGraphClock;
@@ -182,6 +183,12 @@ namespace GameCapturePlayer
         {
             if (!_init) return;
             _main.SetLowLatencyGCEnabled(chkLowLatencyGC.IsChecked == true);
+        }
+
+        private void ChkPreventSleep_Changed(object sender, RoutedEventArgs e)
+        {
+            if (!_init) return;
+            _main.SetPreventSleepWhileStreamingEnabled(chkPreventSleep.IsChecked == true);
         }
 
         private void GraphTweaks_Changed(object sender, RoutedEventArgs e)

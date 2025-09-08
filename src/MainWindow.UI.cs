@@ -78,6 +78,7 @@ namespace GameCapturePlayer
                 UpdateUiState(isRunning: true);
                 ShowStatus("Running");
                 if (_settings.StatsOverlay) ShowStatsOverlay(true);
+                try { UpdateSleepInhibit(); } catch { }
 
                 // Keep overlay for a brief minimum to avoid flash, then fade it out
                 try { await Task.Delay(600); await FadeOutAndHideIntroOverlayAsync(); } catch { }
@@ -87,6 +88,7 @@ namespace GameCapturePlayer
                 ShowStatus($"Start error: {ex.Message}");
                 StopAll();
                 try { HideIntroOverlayImmediate(); } catch { }
+                try { UpdateSleepInhibit(); } catch { }
             }
         }
 
@@ -96,6 +98,7 @@ namespace GameCapturePlayer
             UpdateUiState(isRunning: false);
             ShowStatus("Stopped");
             try { HideIntroOverlayImmediate(); } catch { }
+            try { UpdateSleepInhibit(); } catch { }
         }
 
         private void btnFullscreen_Click(object sender, RoutedEventArgs e)
@@ -108,6 +111,7 @@ namespace GameCapturePlayer
                     this.WindowStyle = System.Windows.WindowStyle.None;
                     this.WindowState = System.Windows.WindowState.Maximized;
                     this.Topmost = true;
+                    try { this.Cursor = System.Windows.Input.Cursors.None; } catch { }
                     try { topBar.Visibility = Visibility.Collapsed; } catch { }
                     try { ShowFullscreenHintOverlay(); _fullscreenHintTimer.Start(); } catch { }
                     try { if (_vmr9Windowless != null) { _vmr9Windowless.SetAspectRatioMode(DirectShowLib.VMR9AspectRatioMode.LetterBox); UpdateVideoPosition(); } } catch { }
@@ -119,11 +123,13 @@ namespace GameCapturePlayer
                     this.Topmost = false;
                     this.WindowStyle = System.Windows.WindowStyle.SingleBorderWindow;
                     this.WindowState = System.Windows.WindowState.Normal;
+                    try { this.Cursor = System.Windows.Input.Cursors.Arrow; } catch { }
                     try { topBar.Visibility = Visibility.Visible; } catch { }
                     try { HideFullscreenHintOverlay(); } catch { }
                     try { if (_vmr9Windowless != null) { _vmr9Windowless.SetAspectRatioMode(DirectShowLib.VMR9AspectRatioMode.LetterBox); UpdateVideoPosition(); } } catch { }
                     try { if (btnFullscreen != null) btnFullscreen.ToolTip = "Enter fullscreen"; } catch { }
                 }
+                try { UpdateSleepInhibit(); } catch { }
             }
             catch { }
         }

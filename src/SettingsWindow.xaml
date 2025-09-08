@@ -79,6 +79,7 @@
                             <CheckBox x:Name="chkHighPrio" Content="High process priority" Margin="0,4,0,0" Checked="ChkHighPrio_Changed" Unchecked="ChkHighPrio_Changed"/>
                             <CheckBox x:Name="chkOneMsTimer" Content="1 ms system timer (timeBeginPeriod)" Margin="0,4,0,0" Checked="ChkOneMsTimer_Changed" Unchecked="ChkOneMsTimer_Changed"/>
                             <CheckBox x:Name="chkLowLatencyGC" Content=".NET SustainedLowLatency GC" Margin="0,4,0,0" Checked="ChkLowLatencyGC_Changed" Unchecked="ChkLowLatencyGC_Changed"/>
+                            <CheckBox x:Name="chkPreventSleep" Content="Prevent system sleep while streaming" Margin="0,4,0,0" Checked="ChkPreventSleep_Changed" Unchecked="ChkPreventSleep_Changed"/>
                         </StackPanel>
 
                         <Separator/>

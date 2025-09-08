@@ -20,10 +20,12 @@ namespace GameCapturePlayer
                     StartAudioMonitor();
                     UpdateUiState(isRunning: true);
                     if (_settings.StatsOverlay) ShowStatsOverlay(true);
+                    try { UpdateSleepInhibit(); } catch { }
                 }
                 else
                 {
                     UpdateUiState(isRunning: false);
+                    try { UpdateSleepInhibit(); } catch { }
                 }
             }
             catch (Exception ex)
@@ -57,6 +59,12 @@ namespace GameCapturePlayer
             {
                 if (enabled) ApplyLowLatencyGC(); else RestoreGC();
             }
+        }
+
+        public void SetPreventSleepWhileStreamingEnabled(bool enabled)
+        {
+            _settings.PreventSleepWhileStreaming = enabled;
+            try { UpdateSleepInhibit(); } catch { }
         }
 
         public void SetGraphTweaks(bool singleStream, bool minimalBuffering, bool noGraphClock)

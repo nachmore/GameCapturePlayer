@@ -28,6 +28,9 @@ namespace GameCapturePlayer
             public bool OneMsTimer { get; set; } = true;
             public bool LowLatencyGC { get; set; } = true;
 
+            // Prevent system sleep while streaming (off by default)
+            public bool PreventSleepWhileStreaming { get; set; } = false;
+
             public bool StatsOverlay { get; set; } = false;
             public StatsCorner StatsPosition { get; set; } = StatsCorner.TopLeft;
 

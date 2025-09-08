@@ -3,11 +3,15 @@ using System.Diagnostics;
 using System.Runtime;
 using System.Runtime.InteropServices;
 using DirectShowLib;
+using System.Threading.Tasks;
 
 namespace GameCapturePlayer
 {
     public partial class MainWindow
     {
+        // Sleep inhibition state
+        private bool _sleepInhibitApplied = false;
+
         private void RequestLowLatencyOnSource(IBaseFilter source)
         {
             if (source == null) return;
@@ -151,6 +155,55 @@ namespace GameCapturePlayer
             RestorePriority();
             RestoreTimerResolution();
             RestoreGC();
+            try { UpdateSleepInhibit(); } catch { }
+        }
+
+        [Flags]
+        private enum EXECUTION_STATE : uint
+        {
+            ES_SYSTEM_REQUIRED   = 0x00000001,
+            ES_DISPLAY_REQUIRED  = 0x00000002,
+            // Legacy flag not used: ES_AWAYMODE_REQUIRED = 0x00000040,
+            ES_CONTINUOUS        = 0x80000000,
+        }
+
+        [DllImport("kernel32.dll")]
+        private static extern EXECUTION_STATE SetThreadExecutionState(EXECUTION_STATE esFlags);
+
+        private bool WantSleepInhibit()
+        {
+            try
+            {
+                return _isFullscreen || (_settings.PreventSleepWhileStreaming && IsRunning);
+            }
+            catch { return false; }
+        }
+
+        private void UpdateSleepInhibit()
+        {
+            bool want = WantSleepInhibit();
+            if (want == _sleepInhibitApplied) return;
+            _sleepInhibitApplied = want;
+            try
+            {
+                Task.Run(() =>
+                {
+                    try
+                    {
+                        if (want)
+                        {
+                            SetThreadExecutionState(EXECUTION_STATE.ES_CONTINUOUS | EXECUTION_STATE.ES_SYSTEM_REQUIRED | EXECUTION_STATE.ES_DISPLAY_REQUIRED);
+                        }
+                        else
+                        {
+                            // Clear requirements
+                            SetThreadExecutionState(EXECUTION_STATE.ES_CONTINUOUS);
+                        }
+                    }
+                    catch { }
+                });
+            }
+            catch { }
         }
     }
 }
