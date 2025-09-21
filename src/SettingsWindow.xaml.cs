@@ -49,7 +49,7 @@ namespace GameCapturePlayer
                 cmbAudio.SelectedItem = selAud ?? (audio.Count > 0 ? audio[0] : null);
 
                 // Stats overlay
-                var s = _main.GetSettings();
+                var s = _main.GetAppSettings();
                 chkShowStats.IsChecked = s.StatsOverlay;
                 cmbStatsPos.SelectedIndex = s.StatsPosition switch
                 {
@@ -59,6 +59,9 @@ namespace GameCapturePlayer
                     MainWindow.StatsCorner.BottomRight => 3,
                     _ => 0
                 };
+
+                // Remember devices preference (read from settings)
+                chkRememberDevices.IsChecked = s.RememberDevices;
 
                 // Advanced toggles
                 chkHighPrio.IsChecked = s.HighPriority;
@@ -99,7 +102,7 @@ namespace GameCapturePlayer
                 }
 
                 // Select current preference
-                var s = _main.GetSettings();
+                var s = _main.GetAppSettings();
                 ComboBoxItem? toSelect = auto;
                 if (s.PreferredWidth > 0 && s.PreferredHeight > 0)
                 {
@@ -134,6 +137,11 @@ namespace GameCapturePlayer
                     _main.RestartPreviewIfRunning();
                 }
             }
+            // Save device preferences if RememberDevices is enabled
+            if (chkRememberDevices.IsChecked == true)
+            {
+                _main.SaveDevicePreferences();
+            }
         }
 
         private void CmbAudio_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -147,12 +155,24 @@ namespace GameCapturePlayer
                     _main.RestartPreviewIfRunning();
                 }
             }
+            // Save device preferences if RememberDevices is enabled
+            if (chkRememberDevices.IsChecked == true)
+            {
+                _main.SaveDevicePreferences();
+            }
+        }
+
+        private void ChkRememberDevices_Changed(object sender, RoutedEventArgs e)
+        {
+            if (!_init) return;
+            _main.SetRememberDevices(chkRememberDevices.IsChecked == true);
         }
 
         private void ChkShowStats_Changed(object sender, RoutedEventArgs e)
         {
             if (!_init) return;
             _main.ShowStatsOverlay(chkShowStats.IsChecked == true);
+            _main.SavePrefs();
         }
 
         private void CmbStatsPos_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -163,6 +183,7 @@ namespace GameCapturePlayer
                 if (Enum.TryParse<MainWindow.StatsCorner>(s, out var corner))
                 {
                     _main.SetStatsPosition(corner);
+                    _main.SavePrefs();
                 }
             }
         }
@@ -171,24 +192,28 @@ namespace GameCapturePlayer
         {
             if (!_init) return;
             _main.SetHighPriorityEnabled(chkHighPrio.IsChecked == true);
+            _main.SavePrefs();
         }
 
         private void ChkOneMsTimer_Changed(object sender, RoutedEventArgs e)
         {
             if (!_init) return;
             _main.SetOneMsTimerEnabled(chkOneMsTimer.IsChecked == true);
+            _main.SavePrefs();
         }
 
         private void ChkLowLatencyGC_Changed(object sender, RoutedEventArgs e)
         {
             if (!_init) return;
             _main.SetLowLatencyGCEnabled(chkLowLatencyGC.IsChecked == true);
+            _main.SavePrefs();
         }
 
         private void ChkPreventSleep_Changed(object sender, RoutedEventArgs e)
         {
             if (!_init) return;
             _main.SetPreventSleepWhileStreamingEnabled(chkPreventSleep.IsChecked == true);
+            _main.SavePrefs();
         }
 
         private void GraphTweaks_Changed(object sender, RoutedEventArgs e)
@@ -198,6 +223,7 @@ namespace GameCapturePlayer
                 chkSingleStream.IsChecked == true,
                 chkMinimalBuffering.IsChecked == true,
                 chkNoGraphClock.IsChecked == true);
+            _main.SavePrefs();
         }
 
         private void CmbFormats_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -216,17 +242,18 @@ namespace GameCapturePlayer
                     _main.RestartPreviewIfRunning();
                 }
             }
+            _main.SavePrefs();
         }
 
         private void BtnClose_Click(object sender, RoutedEventArgs e)
         {
-            try { _main.SaveCurrentDevicePreferences(); } catch { }
+            try { _main.SavePrefs(); } catch { }
             try { this.Close(); } catch { }
         }
 
         private void SettingsWindow_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
         {
-            try { _main.SaveCurrentDevicePreferences(); } catch { }
+            try { _main.SavePrefs(); } catch { }
         }
 
         private void Header_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -245,7 +272,7 @@ namespace GameCapturePlayer
         {
             if (e.Key == Key.Escape)
             {
-                try { _main.SaveCurrentDevicePreferences(); } catch { }
+                try { _main.SavePrefs(); } catch { }
                 try { this.Close(); } catch { }
                 e.Handled = true;
             }

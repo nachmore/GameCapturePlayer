@@ -18,7 +18,7 @@ namespace GameCapturePlayer
     {
         public enum StatsCorner { TopLeft, TopRight, BottomLeft, BottomRight }
 
-        public class AdvancedSettings
+        public class AppSettings
         {
             public bool VmrSingleStream { get; set; } = true;
             public bool MinimalBuffering { get; set; } = true;
@@ -30,6 +30,13 @@ namespace GameCapturePlayer
 
             // Prevent system sleep while streaming (off by default)
             public bool PreventSleepWhileStreaming { get; set; } = false;
+
+            // Whether to remember device selection across runs
+            public bool RememberDevices { get; set; } = false;
+
+            // Remembered device selections (persisted only when RememberDevices is true)
+            public string? VideoDevicePath { get; set; }
+            public string? AudioDevicePath { get; set; }
 
             public bool StatsOverlay { get; set; } = false;
             public StatsCorner StatsPosition { get; set; } = StatsCorner.TopLeft;
@@ -73,8 +80,8 @@ namespace GameCapturePlayer
         private bool _timerPeriodApplied = false;
         private GCLatencyMode _originalGcLatency = GCLatencyMode.Interactive;
 
-        // Advanced settings and stats overlay
-        private readonly AdvancedSettings _settings = new AdvancedSettings();
+        // Application settings and stats overlay
+        private readonly AppSettings _settings = new AppSettings();
         private readonly DispatcherTimer _statsTimer = new DispatcherTimer();
         private int _prevDropped = 0, _prevNotDropped = 0;
         private DateTime _prevTime = DateTime.UtcNow;
@@ -84,15 +91,8 @@ namespace GameCapturePlayer
         private readonly DispatcherTimer _fullscreenHintTimer = new DispatcherTimer();
         private Window? _fullscreenHintWindow;
 
-        // Preferences persistence
-        private class PersistedPrefs
-        {
-            public bool RememberDevices { get; set; }
-            public string? VideoDevicePath { get; set; }
-            public string? AudioDevicePath { get; set; }
-        }
-        private PersistedPrefs _prefs = new PersistedPrefs();
-        private static string PrefsFilePath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "GameCapturePlayer", "settings.json");
+        // Settings persistence
+        private static string SettingsFilePath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "GameCapturePlayer", "settings.json");
 
         // Media graphs on a dedicated STA thread
         private readonly MediaGraphWorker _mediaWorker = new MediaGraphWorker();
@@ -131,11 +131,11 @@ namespace GameCapturePlayer
                 try { ApplyStartupBackgroundToPanel(); } catch { }
                 LoadDevices();
                 LoadPrefs();
-                // Choose devices and auto-start according to prefs or prompt
-                if (_prefs.RememberDevices)
+                // Choose devices and auto-start according to settings or prompt
+                if (_settings.RememberDevices)
                 {
-                    var vid = TryFindDeviceByPath(FilterCategory.VideoInputDevice, _prefs.VideoDevicePath);
-                    var aud = TryFindDeviceByPath(FilterCategory.AudioInputDevice, _prefs.AudioDevicePath);
+                    var vid = TryFindDeviceByPath(FilterCategory.VideoInputDevice, _settings.VideoDevicePath);
+                    var aud = TryFindDeviceByPath(FilterCategory.AudioInputDevice, _settings.AudioDevicePath);
                     if (vid != null) cmbVideo.SelectedItem = vid;
                     if (aud != null) cmbAudio.SelectedItem = aud;
                     if (vid != null && aud != null)
@@ -189,6 +189,7 @@ namespace GameCapturePlayer
 
         private void MainWindow_Closed(object? sender, EventArgs e)
         {
+            try { SavePrefs(); } catch { }
             StopAll();
             try { _mediaWorker.Dispose(); } catch { }
         }

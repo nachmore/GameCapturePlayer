@@ -74,6 +74,6 @@ namespace GameCapturePlayer
             _settings.NoGraphClock = noGraphClock;
         }
 
-        public AdvancedSettings GetSettings() => _settings;
+        public AppSettings GetAppSettings() => _settings;
     }
 }

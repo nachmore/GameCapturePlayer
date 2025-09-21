@@ -40,11 +40,13 @@
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
                             <TextBlock Text="Video:" VerticalAlignment="Center" Margin="0,0,8,0"/>
                             <ComboBox x:Name="cmbVideo" Grid.Column="1" Width="360" DisplayMemberPath="Name" SelectionChanged="CmbVideo_SelectionChanged"/>
                             <TextBlock Text="Audio:" Grid.Row="1" VerticalAlignment="Center" Margin="0,8,8,0"/>
                             <ComboBox x:Name="cmbAudio" Grid.Row="1" Grid.Column="1" Width="360" DisplayMemberPath="Name" Margin="0,8,0,0" SelectionChanged="CmbAudio_SelectionChanged"/>
+                            <CheckBox x:Name="chkRememberDevices" Grid.Row="2" Grid.Column="1" Content="Automatically start streaming from these devices" Margin="0,8,0,0" Checked="ChkRememberDevices_Changed" Unchecked="ChkRememberDevices_Changed"/>
                         </Grid>
 
                         <Separator/>

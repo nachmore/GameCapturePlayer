@@ -9,9 +9,6 @@ namespace GameCapturePlayer
 {
     public partial class MainWindow
     {
-        // Sleep inhibition state
-        private bool _sleepInhibitApplied = false;
-
         private void RequestLowLatencyOnSource(IBaseFilter source)
         {
             if (source == null) return;
@@ -182,8 +179,9 @@ namespace GameCapturePlayer
         private void UpdateSleepInhibit()
         {
             bool want = WantSleepInhibit();
-            if (want == _sleepInhibitApplied) return;
-            _sleepInhibitApplied = want;
+
+      Debug.WriteLine("setting sleep inhibited to: " + want);
+
             try
             {
                 Task.Run(() =>
