@@ -91,6 +91,9 @@ namespace GameCapturePlayer
         private readonly DispatcherTimer _fullscreenHintTimer = new DispatcherTimer();
         private Window? _fullscreenHintWindow;
 
+        // Periodic refresh to keep system/display awake while needed
+        private readonly DispatcherTimer _sleepInhibitTimer = new DispatcherTimer();
+
         // Settings persistence
         private static string SettingsFilePath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "GameCapturePlayer", "settings.json");
 
@@ -113,6 +116,10 @@ namespace GameCapturePlayer
             _fullscreenHintTimer.Interval = TimeSpan.FromSeconds(2.5);
             _fullscreenHintTimer.Tick += (s, e) => { try { HideFullscreenHintOverlay(); } catch { } _fullscreenHintTimer.Stop(); };
             _statsTimer.Tick += StatsTimer_Tick;
+
+            // Refresh sleep inhibition every 60 seconds when enabled
+            _sleepInhibitTimer.Interval = TimeSpan.FromSeconds(60);
+            _sleepInhibitTimer.Tick += (s, e) => { try { UpdateSleepInhibit(); } catch { } };
         }
 
         private void MainWindow_LocationOrSizeChanged(object? sender, EventArgs e)

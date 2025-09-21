@@ -180,26 +180,38 @@ namespace GameCapturePlayer
         {
             bool want = WantSleepInhibit();
 
-      Debug.WriteLine("setting sleep inhibited to: " + want);
-
+            // Manage the UI timer on the UI thread
             try
             {
-                Task.Run(() =>
+                System.Windows.Application.Current?.Dispatcher?.BeginInvoke(new Action(() =>
                 {
                     try
                     {
                         if (want)
                         {
-                            SetThreadExecutionState(EXECUTION_STATE.ES_CONTINUOUS | EXECUTION_STATE.ES_SYSTEM_REQUIRED | EXECUTION_STATE.ES_DISPLAY_REQUIRED);
+                            if (!_sleepInhibitTimer.IsEnabled) _sleepInhibitTimer.Start();
                         }
                         else
                         {
-                            // Clear requirements
-                            SetThreadExecutionState(EXECUTION_STATE.ES_CONTINUOUS);
+                            if (_sleepInhibitTimer.IsEnabled) _sleepInhibitTimer.Stop();
                         }
                     }
                     catch { }
-                });
+                }));
+            }
+            catch { }
+
+            try
+            {
+                if (want)
+                {
+                    SetThreadExecutionState(EXECUTION_STATE.ES_CONTINUOUS | EXECUTION_STATE.ES_SYSTEM_REQUIRED | EXECUTION_STATE.ES_DISPLAY_REQUIRED);
+                }
+                else
+                {
+                    // Clear requirements
+                    SetThreadExecutionState(EXECUTION_STATE.ES_CONTINUOUS);
+                }
             }
             catch { }
         }
