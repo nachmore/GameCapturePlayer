@@ -1,13 +1,8 @@
 ; Inno Setup Script for Game Capture Player
 ; Requirements:
 ; 1) Install Inno Setup (https://jrsoftware.org/isinfo.php)
-; 2) Publish the app first into installer\publish using the command below
-;
-;   dotnet publish ..\src\GameCapturePlayer.csproj -c Release -r win-x64 \
-;       -p:PublishSingleFile=true -p:SelfContained=true -p:PublishTrimmed=false \
-;       -o "%~dp0publish"
-;
-; Then open this .iss in Inno Setup and click Build.
+; 2) Run build_installer.ps1 from ../scripts/
+
 
 #define AppName "Game Capture Player"
 #define AppExe "GameCapturePlayer.exe"
