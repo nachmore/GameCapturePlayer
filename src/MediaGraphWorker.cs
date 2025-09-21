@@ -91,6 +91,120 @@ namespace GameCapturePlayer
             });
         }
 
+        // Query renderer stats (dropped and drawn frames) on the worker thread
+        public Task<(int dropped, int notDropped)> GetRendererFrameStatsAsync()
+        {
+            return InvokeAsync(() =>
+            {
+                int dropped = 0, notDropped = 0;
+                try
+                {
+                    IPin? rpin = (_vmr9 != null) ? DsFindPin.ByDirection(_vmr9, PinDirection.Input, 0) : null;
+                    if (rpin is IQualProp qp)
+                    {
+                        qp.get_FramesDroppedInRenderer(out dropped);
+                        qp.get_FramesDrawn(out notDropped);
+                    }
+                    else
+                    {
+                        IAMDroppedFrames? df = null;
+                        if (_vmr9 is IAMDroppedFrames dfFilter)
+                            df = dfFilter;
+                        else if (rpin is IAMDroppedFrames dfPin)
+                            df = dfPin;
+                        if (df != null)
+                        {
+                            df.GetNumDropped(out dropped);
+                            df.GetNumNotDropped(out notDropped);
+                        }
+                    }
+                }
+                catch { }
+                return (dropped, notDropped);
+            });
+        }
+
+        // Query the native video size from VMR9 Windowless control on the worker thread
+        public Task<(int width, int height)> GetNativeVideoSizeAsync()
+        {
+            return InvokeAsync(() =>
+            {
+                int w = 0, h = 0;
+                try
+                {
+                    if (_vmr9Windowless != null)
+                    {
+                        int arx, ary;
+                        int hr = _vmr9Windowless.GetNativeVideoSize(out w, out h, out arx, out ary);
+                        // Ignore hr; if w/h are 0 it will be treated as unavailable by caller
+                    }
+                }
+                catch { }
+                return (w, h);
+            });
+        }
+
+        // Query the negotiated nominal FPS (AvgTimePerFrame) from the source pin
+        public Task<double> GetNominalFpsAsync()
+        {
+            return InvokeAsync(() =>
+            {
+                double fps = 0;
+                if (_videoCaptureGraph == null || _videoSource == null) return 0.0;
+                object o;
+                IAMStreamConfig? sc = null;
+                try
+                {
+                    var iid = typeof(IAMStreamConfig).GUID;
+                    int hr = _videoCaptureGraph.FindInterface(PinCategory.Preview, MediaType.Video, _videoSource, iid, out o);
+                    if (hr >= 0 && o is IAMStreamConfig scPrev) sc = scPrev;
+                }
+                catch { }
+                if (sc == null)
+                {
+                    try
+                    {
+                        var iid = typeof(IAMStreamConfig).GUID;
+                        int hr = _videoCaptureGraph.FindInterface(PinCategory.Capture, MediaType.Video, _videoSource, iid, out o);
+                        if (hr >= 0 && o is IAMStreamConfig scCap) sc = scCap;
+                    }
+                    catch { }
+                }
+                if (sc != null)
+                {
+                    try
+                    {
+                        sc.GetFormat(out AMMediaType mt);
+                        try
+                        {
+                            long atpf = 0;
+                            if (mt.formatType == FormatType.VideoInfo && mt.formatPtr != IntPtr.Zero)
+                            {
+                                var vih = (VideoInfoHeader)System.Runtime.InteropServices.Marshal.PtrToStructure(mt.formatPtr, typeof(VideoInfoHeader))!;
+                                atpf = vih.AvgTimePerFrame;
+                            }
+                            else if (mt.formatType == FormatType.VideoInfo2 && mt.formatPtr != IntPtr.Zero)
+                            {
+                                var vih2 = (VideoInfoHeader2)System.Runtime.InteropServices.Marshal.PtrToStructure(mt.formatPtr, typeof(VideoInfoHeader2))!;
+                                atpf = vih2.AvgTimePerFrame;
+                            }
+                            if (atpf > 0) fps = 10000000.0 / atpf;
+                        }
+                        finally
+                        {
+                            DsUtils.FreeAMMediaType(mt);
+                        }
+                    }
+                    catch { }
+                    finally
+                    {
+                        try { System.Runtime.InteropServices.Marshal.ReleaseComObject(sc); } catch { }
+                    }
+                }
+                return fps;
+            });
+        }
+
         public Task StopAsync()
         {
             return InvokeAsync(StopInternal);

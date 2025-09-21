@@ -44,34 +44,12 @@ namespace GameCapturePlayer
             _settings.StatsPosition = corner;
         }
 
-        private void StatsTimer_Tick(object? sender, EventArgs e)
+        private async void StatsTimer_Tick(object? sender, EventArgs e)
         {
             if (_overlayLabel == null || _panel == null) return;
 
             int dropped = 0, notDropped = 0;
-            try
-            {
-                IPin? rpin = (_vmr9 != null) ? DsFindPin.ByDirection(_vmr9, PinDirection.Input, 0) : null;
-                if (rpin is IQualProp qp)
-                {
-                    qp.get_FramesDroppedInRenderer(out dropped);
-                    qp.get_FramesDrawn(out notDropped);
-                }
-                else
-                {
-                    IAMDroppedFrames? df = null;
-                    if (_vmr9 is IAMDroppedFrames dfFilter)
-                        df = dfFilter;
-                    else if (rpin is IAMDroppedFrames dfPin)
-                        df = dfPin;
-                    if (df != null)
-                    {
-                        df.GetNumDropped(out dropped);
-                        df.GetNumNotDropped(out notDropped);
-                    }
-                }
-            }
-            catch { }
+            try { var stats = await _mediaWorker.GetRendererFrameStatsAsync(); dropped = stats.dropped; notDropped = stats.notDropped; } catch { }
 
             var now = DateTime.UtcNow;
             double dt = (now - _prevTime).TotalSeconds;
@@ -80,11 +58,21 @@ namespace GameCapturePlayer
             {
                 fps = (notDropped - _prevNotDropped) / dt;
             }
+            // Fallback to nominal FPS from negotiated media type if we couldn't compute a live FPS yet
+            if (fps <= 0)
+            {
+                try
+                {
+                    var nominal = await _mediaWorker.GetNominalFpsAsync();
+                    if (nominal > 0) fps = nominal;
+                }
+                catch { }
+            }
             _prevTime = now;
             _prevDropped = dropped;
             _prevNotDropped = notDropped;
 
-            string res = GetCurrentVideoResolution();
+            string res = await GetCurrentVideoResolutionAsync();
             string text = $"Res: {res}  FPS: {(fps > 0 ? fps.ToString("F1") : "n/a")}  Dropped: {dropped}";
             try { _overlayLabel.Text = text; } catch { }
             RepositionOverlayLabel();
@@ -113,16 +101,13 @@ namespace GameCapturePlayer
             _overlayLabel.Location = new System.Drawing.Point(x, y);
         }
 
-        private string GetCurrentVideoResolution()
+        private async System.Threading.Tasks.Task<string> GetCurrentVideoResolutionAsync()
         {
             try
             {
-                if (_vmr9Windowless == null) return "n/a";
-                int w, h, arx, ary;
-                int hr = _vmr9Windowless.GetNativeVideoSize(out w, out h, out arx, out ary);
-                DsError.ThrowExceptionForHR(hr);
-                if (w > 0 && h > 0)
-                    return $"{w}x{h}";
+                var size = await _mediaWorker.GetNativeVideoSizeAsync();
+                if (size.width > 0 && size.height > 0)
+                    return $"{size.width}x{size.height}";
             }
             catch { }
             return "n/a";
