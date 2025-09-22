@@ -6,6 +6,7 @@ using System.Windows.Threading;
 using System.Threading.Tasks;
 using System.Windows.Media.Animation;
 using DirectShowLib;
+using System.Windows.Forms;
 
 namespace GameCapturePlayer
 {
@@ -112,6 +113,8 @@ namespace GameCapturePlayer
                     this.WindowState = System.Windows.WindowState.Maximized;
                     this.Topmost = true;
                     try { this.Cursor = System.Windows.Input.Cursors.None; } catch { }
+                    // Also hide the WinForms cursor so it stays hidden over the embedded panel
+                    try { System.Windows.Forms.Cursor.Hide(); } catch { }
                     try { topBar.Visibility = Visibility.Collapsed; } catch { }
                     try { ShowFullscreenHintOverlay(); _fullscreenHintTimer.Start(); } catch { }
                     try { if (_vmr9Windowless != null) { _vmr9Windowless.SetAspectRatioMode(DirectShowLib.VMR9AspectRatioMode.LetterBox); UpdateVideoPosition(); } } catch { }
@@ -124,6 +127,8 @@ namespace GameCapturePlayer
                     this.WindowStyle = System.Windows.WindowStyle.SingleBorderWindow;
                     this.WindowState = System.Windows.WindowState.Normal;
                     try { this.Cursor = System.Windows.Input.Cursors.Arrow; } catch { }
+                    // Restore the WinForms cursor visibility when leaving fullscreen
+                    try { System.Windows.Forms.Cursor.Show(); } catch { }
                     try { topBar.Visibility = Visibility.Visible; } catch { }
                     try { HideFullscreenHintOverlay(); } catch { }
                     try { if (_vmr9Windowless != null) { _vmr9Windowless.SetAspectRatioMode(DirectShowLib.VMR9AspectRatioMode.LetterBox); UpdateVideoPosition(); } } catch { }
