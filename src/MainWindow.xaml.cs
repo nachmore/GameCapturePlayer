@@ -38,6 +38,9 @@ namespace GameCapturePlayer
             public string? VideoDevicePath { get; set; }
             public string? AudioDevicePath { get; set; }
 
+            // Persisted audio mute state
+            public bool IsMuted { get; set; } = false;
+
             public bool StatsOverlay { get; set; } = false;
             public StatsCorner StatsPosition { get; set; } = StatsCorner.TopLeft;
 
@@ -141,7 +144,8 @@ namespace GameCapturePlayer
                 try { ApplyStartupBackgroundToPanel(); } catch { }
                 LoadDevices();
                 LoadPrefs();
-                // Initialize mute button UI based on current state
+                // Initialize mute state and button UI based on persisted setting
+                try { _isMuted = _settings.IsMuted; } catch { }
                 try { UpdateMuteButtonUi(); } catch { }
                 // Choose devices and auto-start according to settings or prompt
                 if (_settings.RememberDevices)

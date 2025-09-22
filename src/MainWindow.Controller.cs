@@ -18,6 +18,7 @@ namespace GameCapturePlayer
                     if (_settings.LowLatencyGC) ApplyLowLatencyGC();
                     StartVideoPreview();
                     StartAudioMonitor();
+                    try { _ = _mediaWorker.SetAudioMuteAsync(_isMuted); } catch { }
                     UpdateUiState(isRunning: true);
                     if (_settings.StatsOverlay) ShowStatsOverlay(true);
                     try { UpdateSleepInhibit(); } catch { }

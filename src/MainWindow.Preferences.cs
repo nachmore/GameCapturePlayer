@@ -134,6 +134,7 @@ namespace GameCapturePlayer
             _settings.PreferredFps = loaded.PreferredFps;
             _settings.VideoDevicePath = loaded.VideoDevicePath;
             _settings.AudioDevicePath = loaded.AudioDevicePath;
+            _settings.IsMuted = loaded.IsMuted;
           }
         }
       }

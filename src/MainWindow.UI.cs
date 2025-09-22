@@ -178,6 +178,8 @@ namespace GameCapturePlayer
                 _isMuted = !_isMuted;
                 try { await _mediaWorker.SetAudioMuteAsync(_isMuted); } catch { }
                 UpdateMuteButtonUi();
+                _settings.IsMuted = _isMuted;
+                try { SavePrefs(); } catch { }
             }
             catch { }
         }
