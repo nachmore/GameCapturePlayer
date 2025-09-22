@@ -94,6 +94,9 @@ namespace GameCapturePlayer
         // Periodic refresh to keep system/display awake while needed
         private readonly DispatcherTimer _sleepInhibitTimer = new DispatcherTimer();
 
+        // Audio mute state (UI-level cache; actual control via MediaGraphWorker)
+        private bool _isMuted = false;
+
         // Settings persistence
         private static string SettingsFilePath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "GameCapturePlayer", "settings.json");
 
@@ -138,6 +141,8 @@ namespace GameCapturePlayer
                 try { ApplyStartupBackgroundToPanel(); } catch { }
                 LoadDevices();
                 LoadPrefs();
+                // Initialize mute button UI based on current state
+                try { UpdateMuteButtonUi(); } catch { }
                 // Choose devices and auto-start according to settings or prompt
                 if (_settings.RememberDevices)
                 {

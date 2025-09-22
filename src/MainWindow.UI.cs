@@ -77,6 +77,8 @@ namespace GameCapturePlayer
                 }
                 catch { }
                 UpdateUiState(isRunning: true);
+                // Apply current mute state to the audio graph after start
+                try { await _mediaWorker.SetAudioMuteAsync(_isMuted); } catch { }
                 ShowStatus("Running");
                 if (_settings.StatsOverlay) ShowStatsOverlay(true);
                 try { UpdateSleepInhibit(); } catch { }
@@ -167,6 +169,34 @@ namespace GameCapturePlayer
         private void Panel_DoubleClick(object? sender, EventArgs e)
         {
             try { btnFullscreen_Click(this, new RoutedEventArgs()); } catch { }
+        }
+
+        private async void btnMute_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                _isMuted = !_isMuted;
+                try { await _mediaWorker.SetAudioMuteAsync(_isMuted); } catch { }
+                UpdateMuteButtonUi();
+            }
+            catch { }
+        }
+
+        private void UpdateMuteButtonUi()
+        {
+            try
+            {
+                if (muteIcon != null)
+                {
+                    // Muted icon: E198, Unmuted icon: E15D
+                    muteIcon.Text = _isMuted ? "\uE198" : "\uE15D";
+                }
+                if (btnMute != null)
+                {
+                    btnMute.ToolTip = _isMuted ? "Unmute audio" : "Mute audio";
+                }
+            }
+            catch { }
         }
 
         private void ShowFullscreenHintOverlay()

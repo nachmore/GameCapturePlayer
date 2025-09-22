@@ -29,6 +29,8 @@ namespace GameCapturePlayer
         private ICaptureGraphBuilder2? _audioCaptureGraph;
         private IBaseFilter? _audioSource;
         private IMediaControl? _audioMediaControl;
+        private bool _audioMuted = false;
+        private int _audioPrevVolume = 0; // IBasicAudio volume range: 0 (max) to -10000 (silence)
 
         // Current destination rect (relative to the clipping window)
         private DsRect _dstRect = new DsRect(0, 0, 1, 1);
@@ -208,6 +210,52 @@ namespace GameCapturePlayer
         public Task StopAsync()
         {
             return InvokeAsync(StopInternal);
+        }
+
+        // Get current audio mute state (best-effort)
+        public Task<bool> GetAudioMuteAsync()
+        {
+            return InvokeAsync(() =>
+            {
+                try
+                {
+                    if (_audioGraph is IBasicAudio ba)
+                    {
+                        int vol = 0;
+                        try { ba.get_Volume(out vol); } catch { }
+                        if (vol <= -10000) return true;
+                        // If volume not at min, treat as unmuted
+                        return false;
+                    }
+                }
+                catch { }
+                return _audioMuted;
+            });
+        }
+
+        // Set audio mute state by manipulating IBasicAudio volume on the audio graph
+        public Task SetAudioMuteAsync(bool mute)
+        {
+            return InvokeAsync(() =>
+            {
+                _audioMuted = mute;
+                try
+                {
+                    if (_audioGraph is IBasicAudio ba)
+                    {
+                        if (mute)
+                        {
+                            try { ba.get_Volume(out _audioPrevVolume); } catch { _audioPrevVolume = -2000; }
+                            try { ba.put_Volume(-10000); } catch { }
+                        }
+                        else
+                        {
+                            try { ba.put_Volume(_audioPrevVolume); } catch { }
+                        }
+                    }
+                }
+                catch { }
+            });
         }
 
         private void StartInternal(string videoDevicePath, string audioDevicePath, IntPtr panelHandle, DsRect initialRect,

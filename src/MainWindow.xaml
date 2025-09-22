@@ -37,6 +37,12 @@
                 <Button x:Name="btnFullscreen" Width="28" Height="24" Padding="0" Margin="0,0,6,0" Click="btnFullscreen_Click" Background="Transparent" BorderThickness="0" ToolTip="Enter fullscreen">
                     <TextBlock Text="&#xE740;" FontFamily="Segoe Fluent Icons" FontSize="14" Foreground="Black" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Button>
+
+                <!-- Mute/Unmute audio -->
+                <Button x:Name="btnMute" Width="28" Height="24" Padding="0" Margin="0,0,6,0" Click="btnMute_Click" Background="Transparent" BorderThickness="0" ToolTip="Mute audio">
+                    <!-- Unmuted: Volume icon (E15D). Muted state will switch to E198 in code-behind -->
+                    <TextBlock x:Name="muteIcon" Text="&#xE15D;" FontFamily="Segoe Fluent Icons" FontSize="14" Foreground="Black" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Button>
             </StackPanel>
         </Grid>
 
